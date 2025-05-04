@@ -3,6 +3,8 @@ Tool webpage can be found here: https://meguminbot.github.io/fnf-chart-info-tool
 
 The **FNF Chart Info Tool** is a web-based utility designed to analyze and display information about chart files used in **Friday Night Funkin'** (FNF). This tool supports multiple FNF engines and provides information about the chart, including note counts, BPM, scroll speeds, and more.
 
+Mainly intended to for [Funkipedia](https://fridaynightfunking.fandom.com/) Wiki editors!
+
 ## Features
 
 - **Supported Engines**:
