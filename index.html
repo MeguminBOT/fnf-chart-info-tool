@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friday Night Funkin Chart Info</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Friday Night Funkin Chart Info</h1>
+        <div id="supported-engines" class="info-box">
+            <p>Supported Engines: Psych Engine</p>
+            <p>Upcoming: Codename Engine, V-Slice, Kade Engine</p>
+        </div>
+        <div id="drop-area">
+            <p>Drag and drop any FNF Chart file here or click to upload one</p>
+            <input type="file" id="fileElem" accept=".json" style="display:none;">
+            <label for="fileElem" class="button">Select File</label>
+        </div>
+        <div>
+            <label for="multiplier-input">Score Multiplier:</label>
+            <input type="number" id="multiplier-input" placeholder="Enter multiplier" />
+            <button id="update-multiplier">Update Multiplier</button>
+        </div>
+        <div id="output-area" class="output">
+            <h2>Chart Information</h2>
+            <pre id="result"></pre>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
