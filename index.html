@@ -8,27 +8,23 @@
 </head>
 <body>
     <div class="container">
-        <h1>Friday Night Funkin Chart Info</h1>
+        <h1>FNF Chart Info Tool</h1>
         <div id="supported-engines" class="info-box">
-            <p>Supported Engines: V-Slice, Psych Engine (0.7 and below), Codename Engine</p>
-            <p>Upcoming: Psych Engine (1.0+), Kade Engine and possibly other lesser known engines</p>
-
-            <p>Info:</p>
-            <p>V-Slice and Codename requires you to drop the chart file and metadata file at the same time.</p>
-            <p>Score Multiplier defaults to 350.</p>
-
-            <p>Warning: This tool is a work in progress and may give incorrect information.</p>
-            
+            <p><strong>Supported Engines:</strong> V-Slice, Psych Engine (0.7 and below), Codename Engine</p>
+            <p><strong>Upcoming:</strong> Psych Engine (1.0+), Kade Engine, and others</p>
+            <p><strong>Note:</strong> Drop chart and metadata files together for V-Slice and Codename.</p>
+            <p><strong>Default Score Multiplier:</strong> 350</p>
+            <p class="warning">Warning: This tool is a work in progress and may give incorrect information.</p>
         </div>
         <div id="drop-area">
-            <p>Drag and drop any FNF Chart file + their metadata file here or click to upload</p>
-            <input type="file" id="fileElem" accept=".json" style="display:none;">
-            <label for="fileElem" class="button">Select File</label>
+            <p>Drag and drop FNF chart files here or click to upload</p>
+            <input type="file" id="fileElem" accept=".json" multiple style="display:none;">
+            <label for="fileElem" class="button">Select Files</label>
         </div>
-        <div>
+        <div class="multiplier-section">
             <label for="multiplier-input">Score Multiplier:</label>
             <input type="number" id="multiplier-input" placeholder="Enter multiplier" />
-            <button id="update-multiplier">Update Multiplier</button>
+            <button id="update-multiplier">Update</button>
         </div>
         <div id="output-area" class="output">
             <h2>Chart Information</h2>

@@ -2,43 +2,32 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     const dropArea = document.getElementById('drop-area');
+    const fileInput = document.getElementById('fileElem');
     const outputArea = document.getElementById('output-area');
     const multiplierInput = document.getElementById('multiplier-input');
     const updateMultiplierButton = document.getElementById('update-multiplier');
     let scoreMultiplier = 350; // Default multiplier
-    let metadataFile = null; // Store metadata file if detected
+    let detectedEngine = "Unknown"; // Add a global variable to store the detected engine type
 
     dropArea.addEventListener('dragover', (event) => {
         event.preventDefault();
-        dropArea.classList.add('active');
+        dropArea.classList.add('hover');
     });
 
     dropArea.addEventListener('dragleave', () => {
-        dropArea.classList.remove('active');
+        dropArea.classList.remove('hover');
     });
 
     dropArea.addEventListener('drop', (event) => {
         event.preventDefault();
-        dropArea.classList.remove('active');
+        dropArea.classList.remove('hover');
         const files = event.dataTransfer.files;
+        handleFiles(files);
+    });
 
-        if (files.length === 1) {
-            const file = files[0];
-            if (file.type === 'application/json') {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const jsonData = JSON.parse(e.target.result);
-                    processJson(jsonData);
-                };
-                reader.readAsText(file);
-            } else {
-                outputArea.textContent = 'Please upload a valid JSON file.';
-            }
-        } else if (files.length === 2) {
-            handleMultipleFiles(files); // Handle engines with multiple files for chart data.
-        } else {
-            outputArea.textContent = 'Please drop one Psych Engine chart or two files for Vslice.';
-        }
+    fileInput.addEventListener('change', (event) => {
+        const files = event.target.files;
+        handleFiles(files);
     });
 
     updateMultiplierButton.addEventListener('click', () => {
@@ -51,7 +40,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    function handleMultipleFiles(files) {
+    function handleFiles(files) {
+        if (files.length === 1) {
+            processSingleFile(files[0]);
+        } else if (files.length === 2) {
+            processMultipleFiles(files);
+        } else {
+            outputArea.textContent = 'Please upload one or two valid JSON files.';
+        }
+    }
+
+    function processSingleFile(file) {
+        if (file.type === 'application/json') {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const jsonData = JSON.parse(e.target.result);
+                processJson(jsonData);
+            };
+            reader.readAsText(file);
+        } else {
+            outputArea.textContent = 'Please upload a valid JSON file.';
+        }
+    }
+
+    function processMultipleFiles(files) {
         let chartFile = null;
         let codenameMetadataFile = null;
         let vsliceMetadataFile = null;
@@ -68,11 +80,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         codenameMetadataFile = jsonData;
                     } else if (isVsliceChartFile(jsonData)) {
                         chartFile = jsonData;
+                        detectedEngine = "V-Slice Engine"; // Set detected engine
                     } else if (isCodenameChartFile(jsonData)) {
                         chartFile = jsonData;
+                        detectedEngine = "Codename Engine"; // Set detected engine
                     }
 
-                    // Handle Vslice charts with metadata
+                    // Handle V-Slice charts with metadata
                     if (chartFile && vsliceMetadataFile) {
                         processVsliceWithMetadata(chartFile, vsliceMetadataFile);
                     }
@@ -115,12 +129,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function processJson(data) {
         if (isVsliceChartFile(data)) {
+            detectedEngine = "V-Slice Engine";
             processVsliceChart(data);
         } else if (isPsychChartFile(data)) {
+            detectedEngine = "Psych Engine";
             processPsychChart(data);
         } else if (isCodenameChartFile(data)) {
+            detectedEngine = "Codename Engine";
             processCodenameChart(data, null);
         } else {
+            detectedEngine = "Unsupported Engine";
             outputArea.textContent = 'Unsupported chart format.';
         }
     }
@@ -193,6 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function processVsliceWithMetadata(chartData, metadata) {
         const keyNames = { 0: "Left", 1: "Down", 2: "Up", 3: "Right" };
         outputArea.innerHTML = '<h2>Chart Information</h2><hr>';
+        outputArea.innerHTML += `<p><strong>Engine:</strong> ${detectedEngine}</p>`;
         outputArea.innerHTML += `<p><strong>Song:</strong> ${metadata.songName}</p>`;
         outputArea.innerHTML += `<p><strong>Artist:</strong> ${metadata.artist}</p>`;
         outputArea.innerHTML += `<p><strong>Charter:</strong> ${metadata.charter}</p>`;
@@ -278,6 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
             : startingScrollSpeed;
     
         outputArea.innerHTML = '<h2>Chart Information</h2><hr>';
+        outputArea.innerHTML += `<p><strong>Engine:</strong> ${detectedEngine}</p>`;
         outputArea.innerHTML += `<p><strong>Song:</strong> ${songName}</p>`;
         outputArea.innerHTML += `<p><strong>BPM:</strong> ${bpmInfo}</p>`;
         outputArea.innerHTML += `<p><strong>Scroll Speed:</strong> ${scrollSpeedInfo}</p><hr>`;
@@ -292,6 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function displayResults(noteCounts, keyNames, songName, bpm, speed) {
         outputArea.innerHTML = '<h2>Chart Information</h2><hr>';
+        outputArea.innerHTML += `<p><strong>Engine:</strong> ${detectedEngine}</p>`;
         outputArea.innerHTML += `<p><strong>Song:</strong> ${songName}</p>`;
         outputArea.innerHTML += `<p><strong>BPM:</strong> ${bpm}</p>`;
         outputArea.innerHTML += `<p><strong>Scroll Speed:</strong> ${speed}</p><hr>`;

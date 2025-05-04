@@ -1,0 +1,20 @@
+{
+	"beatsPerMeasure": 4,
+	"opponentModeAllowed": false,
+	"coopAllowed": false,
+	"stepsPerBeat": 4,
+	"bpm": 200,
+	"difficulties": [
+		"NORMAL"
+	],
+	"needsVoices": false,
+	"parsedColor": -7376387,
+	"displayName": "Suitmation-Trials",
+	"icon": "bf",
+	"name": "Suitmation-Trials",
+	"color": "#8F71FD",
+	"customValues": {
+		"deathscript": "defaultgameover",
+		"hudType": "none"
+	}
+}
