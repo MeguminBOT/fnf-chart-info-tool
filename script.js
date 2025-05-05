@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let chartFile = null;
         let codenameMetadataFile = null;
         let vsliceMetadataFile = null;
+        let psychEventsFile = null;
 
         for (const file of files) {
             if (file.type === 'application/json') {
@@ -79,27 +80,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 reader.onload = (e) => {
                     const jsonData = JSON.parse(e.target.result);
 
-                    if (isVSliceMetadata(jsonData)) {
+                    if (isPsychChartFile(jsonData)) {
+                        chartFile = jsonData;
+                        detectedEngine = "Psych Engine";
+                    } else if (isPsychEventFile(jsonData)) {
+                        psychEventsFile = jsonData;
+                    } else if (isVSliceMetadata(jsonData)) {
                         vsliceMetadataFile = jsonData;
-                    } else if (isCodenameMetadataFile(jsonData)) {
-                        codenameMetadataFile = jsonData;
                     } else if (isVsliceChartFile(jsonData)) {
                         chartFile = jsonData;
                         detectedEngine = "V-Slice Engine";
+                    } else if (isCodenameMetadataFile(jsonData)) {
+                        codenameMetadataFile = jsonData;
                     } else if (isCodenameChartFile(jsonData)) {
                         chartFile = jsonData;
                         detectedEngine = "Codename Engine";
                     }
 
+                    // Handle Psych Engine charts with optional events file
+                    if (chartFile && psychEventsFile && detectedEngine === "Psych Engine") {
+                        mergePsychChartAndEvents(chartFile, psychEventsFile);
+                    }
                     // Handle V-Slice charts with metadata
-                    if (chartFile && vsliceMetadataFile) {
+                    else if (chartFile && vsliceMetadataFile && detectedEngine === "V-Slice Engine") {
                         processVsliceWithMetadata(chartFile, vsliceMetadataFile);
                     }
                     // Handle Codename charts with or without meta.json
-                    else if (chartFile && codenameMetadataFile) {
+                    else if (chartFile && codenameMetadataFile && detectedEngine === "Codename Engine") {
                         processCodenameChart(chartFile, codenameMetadataFile);
-                    } else if (chartFile && !codenameMetadataFile) {
+                    } else if (chartFile && detectedEngine === "Codename Engine") {
                         processCodenameChart(chartFile, null);
+                    }
+                    // Handle single Psych Engine chart file
+                    else if (chartFile && detectedEngine === "Psych Engine") {
+                        processJson(chartFile);
                     }
                 };
                 reader.readAsText(file);
@@ -107,24 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function isVSliceMetadata(data) {
-        // Vslice metadata file check
-        return data.version && data.songName && data.artist;
-    }
-
-    function isCodenameMetadataFile(data) {
-        // Codename Engine meta.json file check
-        return data.displayName && data.bpm;
-    }
-
-    function isVsliceChartFile(data) {
-        // Checks for properties matching Vslice charts
-        return data.version && data.notes && data.scrollSpeed;
-    }
-
     function isPsychChartFile(data) {
         // Check for Psych Engine v1.0 format
-        if (data.format === "psych_v1") {
+        if (data.format === "psych_v1" && data.notes) {
             return "psych_v1";
         }
 
@@ -136,9 +135,64 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
+    function isPsychEventFile(data) {
+        // Ensure the file has events but does not have notes
+        if (data.song && data.song.events && !data.song.notes) {
+            return true;
+        }
+        if (data.format === "psych_v1" && data.events && !data.notes) {
+            return true;
+        }
+        return false;
+    }
+
+    function isVSliceMetadata(data) {
+        // Vslice metadata file check
+        return data.version && data.songName && data.artist;
+    }
+
+    function isVsliceChartFile(data) {
+        // Checks for properties matching Vslice charts
+        return data.version && data.notes && data.scrollSpeed;
+    }
+
+    function isCodenameMetadataFile(data) {
+        // Codename Engine meta.json file check
+        return data.displayName && data.bpm;
+    }
+
     function isCodenameChartFile(data) {
         // Check for the "codenameChart" property
         return data.codenameChart === true;
+    }
+
+    function mergePsychChartAndEvents(chartFile, eventsFile) {
+        let mergedEvents = [];
+
+        if (eventsFile.format === "psych_v1" && Array.isArray(eventsFile.events)) {
+            mergedEvents = [
+                ...(chartFile?.events || []),
+                ...eventsFile.events
+            ];
+        } else if (eventsFile.song && Array.isArray(eventsFile.song.events)) {
+            mergedEvents = [
+                ...(chartFile.song?.events || []),
+                ...eventsFile.song.events
+            ];
+        }
+
+        // Remove duplicate events (if any)
+        const uniqueEvents = Array.from(
+            new Set(mergedEvents.map((event) => JSON.stringify(event)))
+        ).map((event) => JSON.parse(event));
+
+        if (chartFile.format === "psych_v1") {
+            chartFile.events = uniqueEvents;
+        } else if (chartFile.song) {
+            chartFile.song.events = uniqueEvents;
+        }
+
+        processJson(chartFile);
     }
 
     function processJson(data) {
@@ -149,15 +203,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isVsliceChartFile(data)) {
             detectedEngine = "V-Slice Engine";
             processVsliceChart(data);
-        } else if (psychFormat === "psych_v1") {
-            detectedEngine = "Psych Engine v1.0";
-            processPsychChart(data);
-        } else if (psychFormat === "psych_v1_convert") {
-            detectedEngine = "Psych Engine (Legacy) / Kade Engine / Other";
-            processPsychChart(data.song);
+
         } else if (isCodenameChartFile(data)) {
             detectedEngine = "Codename Engine";
             processCodenameChart(data, null);
+
+        } else if (psychFormat === "psych_v1") {
+            detectedEngine = "Psych Engine v1.0";
+            processPsychChart(data);
+
+        } else if (psychFormat === "psych_v1_convert") {
+            detectedEngine = "Psych Engine (Legacy) / Kade Engine / Other";
+            processPsychChart(data.song);
+
         } else {
             detectedEngine = "Unsupported Engine";
             outputArea.textContent = 'Unsupported chart format. If this is a mistake, please send a bug report and attach the chart file.\nhttps://github.com/MeguminBOT/fnf-chart-info-tool/issues';
