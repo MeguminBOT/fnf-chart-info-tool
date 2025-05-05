@@ -74,12 +74,29 @@ document.addEventListener('DOMContentLoaded', () => {
         let vsliceMetadataFile = null;
         let psychEventsFile = null;
 
-        for (const file of files) {
-            if (file.type === 'application/json') {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const jsonData = JSON.parse(e.target.result);
+        const fileReadPromises = Array.from(files).map((file) => {
+            return new Promise((resolve, reject) => {
+                if (file.type === 'application/json') {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const jsonData = JSON.parse(e.target.result);
+                            resolve({ file, jsonData });
+                        } catch (error) {
+                            reject(`Error parsing JSON in file ${file.name}: ${error.message}`);
+                        }
+                    };
+                    reader.onerror = () => reject(`Error reading file ${file.name}`);
+                    reader.readAsText(file);
+                } else {
+                    reject(`Invalid file type for ${file.name}`);
+                }
+            });
+        });
 
+        Promise.all(fileReadPromises)
+            .then((results) => {
+                results.forEach(({ jsonData }) => {
                     if (isPsychChartFile(jsonData)) {
                         chartFile = jsonData;
                         detectedEngine = "Psych Engine";
@@ -96,29 +113,32 @@ document.addEventListener('DOMContentLoaded', () => {
                         chartFile = jsonData;
                         detectedEngine = "Codename Engine";
                     }
+                });
 
-                    // Handle Psych Engine charts with optional events file
-                    if (chartFile && psychEventsFile && detectedEngine === "Psych Engine") {
-                        mergePsychChartAndEvents(chartFile, psychEventsFile);
-                    }
-                    // Handle V-Slice charts with metadata
-                    else if (chartFile && vsliceMetadataFile && detectedEngine === "V-Slice Engine") {
-                        processVsliceWithMetadata(chartFile, vsliceMetadataFile);
-                    }
-                    // Handle Codename charts with or without meta.json
-                    else if (chartFile && codenameMetadataFile && detectedEngine === "Codename Engine") {
-                        processCodenameChart(chartFile, codenameMetadataFile);
-                    } else if (chartFile && detectedEngine === "Codename Engine") {
-                        processCodenameChart(chartFile, null);
-                    }
-                    // Handle single Psych Engine chart file
-                    else if (chartFile && detectedEngine === "Psych Engine") {
-                        processJson(chartFile);
-                    }
-                };
-                reader.readAsText(file);
-            }
-        }
+                // Handle Psych Engine charts with optional events file
+                if (chartFile && psychEventsFile && detectedEngine === "Psych Engine") {
+                    mergePsychChartAndEvents(chartFile, psychEventsFile);
+                }
+                // Handle V-Slice charts with metadata
+                else if (chartFile && vsliceMetadataFile && detectedEngine === "V-Slice Engine") {
+                    processVsliceWithMetadata(chartFile, vsliceMetadataFile);
+                }
+                // Handle Codename charts with or without meta.json
+                else if (chartFile && codenameMetadataFile && detectedEngine === "Codename Engine") {
+                    processCodenameChart(chartFile, codenameMetadataFile);
+                } else if (chartFile && detectedEngine === "Codename Engine") {
+                    processCodenameChart(chartFile, null);
+                }
+                // Handle single Psych Engine chart file
+                else if (chartFile && detectedEngine === "Psych Engine") {
+                    processJson(chartFile);
+                } else {
+                    outputArea.textContent = 'No valid chart or event files detected.';
+                }
+            })
+            .catch((error) => {
+                outputArea.textContent = `Error processing files: ${error}`;
+            });
     }
 
     function isPsychChartFile(data) {
