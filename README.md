@@ -11,14 +11,22 @@ Mainly intended to for [Funkipedia](https://fridaynightfunking.fandom.com/) Wiki
   - V-Slice Engine
   - Psych Engine
   - Codename Engine
+  - Kade Engine
+  - Forever Engine
+  - and any other engine relying on old pre-vslice chart format
+
 - **Upcoming Support**:
-  - Engines: Kade Engine and more.
   - Scroll Speed Change detection for all engines.
   - Saving the output.
+
+- **"MAYBE" Upcoming support**
+  - 5K+ charts, currently only works with 4 keys.
+      - This would be the last thing I add in that case, everything else takes priority.
 
 - **Key Features**:
   - Drag-and-drop or file upload support for `.json` chart files.
   - Automatically detects the engine type for the uploaded chart files.
+  - Supports event files for Psych Engine
   - Supports metadata files for V-Slice and Codename engines.
   - Displays detailed chart information, including:
     - BPM (with changes, if applicable).
@@ -32,7 +40,7 @@ Mainly intended to for [Funkipedia](https://fridaynightfunking.fandom.com/) Wiki
 
 1. **Upload Files**:
    - Drag and drop `.json` files into the designated area, or click the "Select Files" button to upload.
-   - You can upload a single chart file or a combination of chart and metadata files (for V-Slice and Codename engines).
+   - You can upload a single chart file or both the chart+supported extra file type (e.g events or metadata files)
      - V-Slice and Codename engine requires the metadata file to display some information like Song name, BPM and Scroll Speed.
 
 2. **View Chart Information**:
