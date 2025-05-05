@@ -185,14 +185,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const bpmChanges = new Set();
         if (Array.isArray(chartData.notes)) {
             for (const section of chartData.notes) {
-                if (section.changeBPM) {
+                if (section.changeBPM === true && section.bpm && !isNaN(section.bpm)) {
                     bpmChanges.add(section.bpm);
                 }
             }
         }
 
+        // For some reason, we need this to have BPM changes work for Psych Engine v1.0 chart files.
+        if (chartData.bpm && !bpmChanges.has(chartData.bpm)) {
+            bpmChanges.add(chartData.bpm);
+        }
+
         const bpmList = Array.from(bpmChanges);
-        const bpmInfo = bpmList.length > 1 ? `${chartData.bpm || "Unknown"} (${bpmList.join(", ")})` : chartData.bpm || "Unknown";
+
+        const bpmInfo = bpmList.length > 1 
+            ? `${chartData.bpm || "Unknown"} (${bpmList.filter(bpm => bpm !== chartData.bpm).join(", ")})` 
+            : chartData.bpm || "Unknown";
 
         if (Array.isArray(chartData.notes)) {
             for (const section of chartData.notes) {
