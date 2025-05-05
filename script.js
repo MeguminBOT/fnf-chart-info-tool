@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const outputArea = document.getElementById('output-area');
     const multiplierInput = document.getElementById('multiplier-input');
     const updateMultiplierButton = document.getElementById('update-multiplier');
-    let detectedEngine = "Unknown"; // Add a global variable to store the detected engine type
     let scoreMultiplier = 350; // Default multiplier of most engines and fnf mods.
+    let detectedEngine = "Unknown";
     let lastProcessedChartData = null;
 
     dropArea.addEventListener('dragover', (event) => {
@@ -153,14 +153,14 @@ document.addEventListener('DOMContentLoaded', () => {
             detectedEngine = "Psych Engine v1.0";
             processPsychChart(data);
         } else if (psychFormat === "psych_v1_convert") {
-            detectedEngine = "Psych Engine (Legacy)";
+            detectedEngine = "Psych Engine (Legacy) / Kade Engine / Other";
             processPsychChart(data.song);
         } else if (isCodenameChartFile(data)) {
             detectedEngine = "Codename Engine";
             processCodenameChart(data, null);
         } else {
             detectedEngine = "Unsupported Engine";
-            outputArea.textContent = 'Unsupported chart format.';
+            outputArea.textContent = 'Unsupported chart format. If this is a mistake, please send a bug report and attach the chart file.\nhttps://github.com/MeguminBOT/fnf-chart-info-tool/issues';
         }
     }
 
