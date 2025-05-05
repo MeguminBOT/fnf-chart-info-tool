@@ -9,10 +9,10 @@ Mainly intended to for [Funkipedia](https://fridaynightfunking.fandom.com/) Wiki
 
 - **Supported Engines**:
   - V-Slice Engine
-  - Psych Engine (0.7 and below)
+  - Psych Engine
   - Codename Engine
 - **Upcoming Support**:
-  - Engines: Psych Engine (1.0+) & Kade Engine
+  - Engines: Kade Engine and more.
   - Scroll Speed Change detection for all engines.
   - Saving the output.
 
