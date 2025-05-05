@@ -1,0 +1,103 @@
+{
+	"speed": 2.2,
+	"stage": "stage",
+	"player1": "bf",
+	"player2": "dad",
+	"events": [
+		[
+			22800,
+			[
+				["Change Scroll Speed", "1.27", "0.01"]
+			]
+		]
+	],
+	"notes": [
+		{
+			"gfSection": false,
+			"altAnim": false,
+			"sectionNotes": [],
+			"bpm": 150,
+			"sectionBeats": 4,
+			"changeBPM": false,
+			"mustHitSection": false
+		},
+		{
+			"gfSection": false,
+			"altAnim": false,
+			"sectionNotes": [
+				[1200, 0, 0],
+				[1350, 1, 0],
+				[1500, 2, 0],
+				[1650, 3, 0],
+				[1800, 0, 0],
+				[1950, 1, 0],
+				[2100, 2, 0],
+				[2250, 3, 0]
+			],
+			"bpm": 150,
+			"sectionBeats": 4,
+			"changeBPM": false,
+			"mustHitSection": true
+		},
+		{
+			"gfSection": false,
+			"altAnim": false,
+			"sectionNotes": [
+				[2400, 0, 0],
+				[2550, 1, 0],
+				[2700, 2, 0],
+				[2850, 3, 0],
+				[3000, 0, 0],
+				[3150, 1, 0],
+				[3300, 2, 0],
+				[3450, 3, 0]
+			],
+			"bpm": 150,
+			"sectionBeats": 4,
+			"changeBPM": false,
+			"mustHitSection": false
+		},
+		{
+			"gfSection": false,
+			"altAnim": false,
+			"sectionNotes": [
+				[22800, 4, 0],
+				[22875, 5, 0],
+				[22950, 6, 0],
+				[23025, 7, 0],
+				[23100, 6, 0],
+				[23175, 5, 0],
+				[23250, 4, 0],
+				[23325, 5, 0]
+			],
+			"bpm": 400,
+			"sectionBeats": 4,
+			"changeBPM": true,
+			"mustHitSection": true
+		},
+		{
+			"gfSection": false,
+			"altAnim": false,
+			"sectionNotes": [
+				[23400, 6, 0],
+				[23475, 7, 0],
+				[23550, 6, 0],
+				[23625, 5, 0],
+				[23700, 4, 0],
+				[23775, 5, 0],
+				[23850, 6, 0],
+				[23925, 7, 0]
+			],
+			"bpm": 150,
+			"sectionBeats": 4,
+			"changeBPM": false,
+			"mustHitSection": true
+		}
+	],
+	"gfVersion": "gf",
+	"format": "psych_v1",
+	"bpm": 200,
+	"needsVoices": false,
+	"song": "Wizdomiot",
+	"offset": 0
+}
