@@ -80,10 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         codenameMetadataFile = jsonData;
                     } else if (isVsliceChartFile(jsonData)) {
                         chartFile = jsonData;
-                        detectedEngine = "V-Slice Engine"; // Set detected engine
+                        detectedEngine = "V-Slice Engine";
                     } else if (isCodenameChartFile(jsonData)) {
                         chartFile = jsonData;
-                        detectedEngine = "Codename Engine"; // Set detected engine
+                        detectedEngine = "Codename Engine";
                     }
 
                     // Handle V-Slice charts with metadata
@@ -118,8 +118,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function isPsychChartFile(data) {
-        // Checks for properties matching Psych Engine charts
-        return data.song && data.song.notes && data.song.bpm && data.song.song;
+        // Check for Psych Engine v1.0 format
+        if (data.format === "psych_v1") {
+            return "psych_v1";
+        }
+
+        // Check for Psych Engine v1.0 converted format or legacy structure
+        if ((data.format === "psych_v1_convert" || !data.format) && data.song && data.song.notes) {
+            return "psych_v1_convert";
+        }
+
+        return null;
     }
 
     function isCodenameChartFile(data) {
@@ -128,12 +137,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function processJson(data) {
+        const psychFormat = isPsychChartFile(data);
+
         if (isVsliceChartFile(data)) {
             detectedEngine = "V-Slice Engine";
             processVsliceChart(data);
-        } else if (isPsychChartFile(data)) {
-            detectedEngine = "Psych Engine";
+        } else if (psychFormat === "psych_v1") {
+            detectedEngine = "Psych Engine v1.0";
             processPsychChart(data);
+        } else if (psychFormat === "psych_v1_convert") {
+            detectedEngine = "Psych Engine (Legacy)";
+            processPsychChart(data.song);
         } else if (isCodenameChartFile(data)) {
             detectedEngine = "Codename Engine";
             processCodenameChart(data, null);
@@ -143,36 +157,72 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function processPsychChart(data) {
+    function processPsychChart(chartData) {
         const noteCounts = {};
         const keyNames = { 0: "Left", 1: "Down", 2: "Up", 3: "Right" };
+        let initialScrollSpeed = chartData.speed || 1;
+        let scrollSpeedInfo = `${initialScrollSpeed}`;
 
-        const bpmChanges = new Set();
-        for (const section of data.song.notes) {
-            if (section.bpm) {
-                bpmChanges.add(section.bpm);
+        // Handle "Change Scroll Speed" events (only if the events property exists)
+        if (chartData.events && Array.isArray(chartData.events)) {
+            const scrollSpeedChanges = chartData.events
+                .filter(event => event[1][0][0] === "Change Scroll Speed")
+                .map(event => parseFloat(event[1][0][1])); // Extract the multiplier value from the event
+
+            if (scrollSpeedChanges.length > 0) {
+                const adjustedSpeeds = scrollSpeedChanges.map(multiplier => (initialScrollSpeed * multiplier).toFixed(2));
+                scrollSpeedInfo += ` (${adjustedSpeeds.join(", ")})`;
             }
         }
 
-        const bpmList = Array.from(bpmChanges);
-        const bpmInfo = bpmList.length > 1 ? `${data.song.bpm} (${bpmList.join(', ')})` : data.song.bpm;
-
-        for (const section of data.song.notes) {
-            const mustHitSection = section.mustHitSection || false;
-            for (const note of section.sectionNotes) {
-                const noteIndex = note[1];
-                // Psych Engine uses 0-3 for player notes if mustHitSection is true.
-                // If mustHitSection is false, it uses 4-7 for player notes. So we need to remap them.
-                if (mustHitSection && noteIndex >= 0 && noteIndex <= 3) {
-                    noteCounts[noteIndex] = (noteCounts[noteIndex] || 0) + 1;
-                } else if (!mustHitSection && noteIndex >= 4 && noteIndex <= 7) {
-                    const remappedIndex = noteIndex - 4;
-                    noteCounts[remappedIndex] = (noteCounts[remappedIndex] || 0) + 1;
+        const bpmChanges = new Set();
+        if (Array.isArray(chartData.notes)) {
+            for (const section of chartData.notes) {
+                if (section.changeBPM) {
+                    bpmChanges.add(section.bpm);
                 }
             }
         }
 
-        displayResults(noteCounts, keyNames, data.song.song, bpmInfo, data.song.speed);
+        const bpmList = Array.from(bpmChanges);
+        const bpmInfo = bpmList.length > 1 ? `${chartData.bpm || "Unknown"} (${bpmList.join(", ")})` : chartData.bpm || "Unknown";
+
+        if (Array.isArray(chartData.notes)) {
+            for (const section of chartData.notes) {
+                const mustHitSection = section.mustHitSection || false;
+                for (const note of section.sectionNotes || []) {
+                    const noteIndex = note[1];
+                    // Psych Engine uses 0-3 for player notes if mustHitSection is true.
+                    // If mustHitSection is false, it uses 4-7 for player notes. So we need to remap them.
+                    if (mustHitSection && noteIndex >= 0 && noteIndex <= 3) {
+                        noteCounts[noteIndex] = (noteCounts[noteIndex] || 0) + 1;
+                    } else if (!mustHitSection && noteIndex >= 4 && noteIndex <= 7) {
+                        const remappedIndex = noteIndex - 4;
+                        noteCounts[remappedIndex] = (noteCounts[remappedIndex] || 0) + 1;
+                    }
+                }
+            }
+        }
+
+        const songName = chartData.song || chartData.songName || "Unknown";
+
+        outputArea.innerHTML = '<h2>Chart Information</h2><hr>';
+        outputArea.innerHTML += `<p><strong>Engine:</strong> ${detectedEngine}</p>`;
+        outputArea.innerHTML += `<p><strong>Song:</strong> ${songName}</p>`;
+        outputArea.innerHTML += `<p><strong>BPM:</strong> ${bpmInfo}</p>`;
+        outputArea.innerHTML += `<p><strong>Scroll Speed:</strong> ${scrollSpeedInfo}</p><hr>`;
+
+        let totalCount = 0;
+
+        for (let key = 0; key < 4; key++) {
+            const count = noteCounts[key] || 0;
+            outputArea.innerHTML += `<p>${keyNames[key]}: ${count}</p>`;
+            totalCount += count;
+        }
+
+        const multipliedTotal = totalCount * scoreMultiplier;
+        outputArea.innerHTML += `<hr><p>Max Combo: ${totalCount}</p>`;
+        outputArea.innerHTML += `<p>Max Score: ${multipliedTotal}</p>`;
     }
 
     function processVsliceChart(data) {
