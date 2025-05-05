@@ -6,8 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const outputArea = document.getElementById('output-area');
     const multiplierInput = document.getElementById('multiplier-input');
     const updateMultiplierButton = document.getElementById('update-multiplier');
-    let scoreMultiplier = 350; // Default multiplier
     let detectedEngine = "Unknown"; // Add a global variable to store the detected engine type
+    let scoreMultiplier = 350; // Default multiplier of most engines and fnf mods.
+    let lastProcessedChartData = null;
 
     dropArea.addEventListener('dragover', (event) => {
         event.preventDefault();
@@ -35,6 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isNaN(newMultiplier) && newMultiplier > 0) {
             scoreMultiplier = newMultiplier;
             alert(`Score multiplier updated to ${scoreMultiplier}`);
+
+            if (lastProcessedChartData) {
+                processJson(lastProcessedChartData);
+            }
         } else {
             alert('Please enter a valid positive number.');
         }
@@ -137,6 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function processJson(data) {
+        lastProcessedChartData = data;
+
         const psychFormat = isPsychChartFile(data);
 
         if (isVsliceChartFile(data)) {
