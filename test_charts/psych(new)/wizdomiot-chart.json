@@ -3,14 +3,7 @@
 	"stage": "stage",
 	"player1": "bf",
 	"player2": "dad",
-	"events": [
-		[
-			22800,
-			[
-				["Change Scroll Speed", "1.27", "0.01"]
-			]
-		]
-	],
+	"events": [],
 	"notes": [
 		{
 			"gfSection": false,
