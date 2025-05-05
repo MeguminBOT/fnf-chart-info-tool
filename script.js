@@ -366,24 +366,4 @@ document.addEventListener('DOMContentLoaded', () => {
         outputArea.innerHTML += `<p><strong>Max Combo:</strong> ${totalCount}</p>`;
         outputArea.innerHTML += `<p><strong>Max Score:</strong> ${multipliedTotal}</p>`;
     }
-
-    function displayResults(noteCounts, keyNames, songName, bpm, speed) {
-        outputArea.innerHTML = '<h2>Chart Information</h2><hr>';
-        outputArea.innerHTML += `<p><strong>Engine:</strong> ${detectedEngine}</p>`;
-        outputArea.innerHTML += `<p><strong>Song:</strong> ${songName}</p>`;
-        outputArea.innerHTML += `<p><strong>BPM:</strong> ${bpm}</p>`;
-        outputArea.innerHTML += `<p><strong>Scroll Speed:</strong> ${speed}</p><hr>`;
-
-        let totalCount = 0;
-
-        for (let key = 0; key < 4; key++) {
-            const count = noteCounts[key] || 0;
-            outputArea.innerHTML += `<p>${keyNames[key]}: ${count}</p>`;
-            totalCount += count;
-        }
-
-        const multipliedTotal = totalCount * scoreMultiplier;
-        outputArea.innerHTML += `<hr><p>Max Combo: ${totalCount}</p>`;
-        outputArea.innerHTML += `<p>Max Score: ${multipliedTotal}</p>`;
-    }
 });
