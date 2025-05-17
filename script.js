@@ -1,7 +1,7 @@
 // script.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    const KEY_NAMES = { 0: "Left", 1: "Down", 2: "Up", 3: "Right" };
+    const KEY_NAMES = { 0: "Left", 1: "Down", 2: "Up", 3: "Right", 4: "Extra1", 5: "Extra2", 6: "Extra3", 7: "Extra4" };
     const DIFFICULTIES = ["easy", "normal", "hard"];
     const DEFAULT_MULTIPLIER = 350;
     
@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const wikiTemplateString = document.getElementById('song-info-output');
     const toggleSongInfoButton = document.getElementById('toggle-song-info');
     const songInfoContainer = document.getElementById('song-info-container');
+    const saveOutputButton = document.getElementById('save-output');
 
     let scoreMultiplier = DEFAULT_MULTIPLIER;
     let detectedEngine = "Unknown";
@@ -27,6 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
         fileInput.addEventListener('change', handleFileInput);
         updateMultiplierButton.addEventListener('click', updateMultiplier);
         toggleSongInfoButton.addEventListener('click', wikiTemplateVisibility);
+        if (saveOutputButton) {
+            saveOutputButton.addEventListener('click', saveOutputAsTextFile);
+        }
     }
 
     function handleDragOver(event) {
@@ -76,6 +80,22 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             outputArea.textContent = 'Please upload one or two valid JSON files.';
         }
+    }
+
+    function saveOutputAsTextFile() {
+        if (!outputArea.textContent) {
+            alert('No output to save.');
+            return;
+        }
+        const blob = new Blob([outputArea.textContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'chart_output.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
     function processSingleFile(file) {
@@ -327,10 +347,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const mustHitSection = section.mustHitSection || false;
                 for (const note of section.sectionNotes || []) {
                     const noteIndex = note[1];
-                    if (mustHitSection && noteIndex >= 0 && noteIndex <= 3) {
+                    if (mustHitSection && noteIndex >= 0 && noteIndex <= 7) {
                         noteCounts[noteIndex] = (noteCounts[noteIndex] || 0) + 1;
-                    } else if (!mustHitSection && noteIndex >= 4 && noteIndex <= 7) {
-                        const remappedIndex = noteIndex - 4;
+                    } else if (!mustHitSection && noteIndex >= 8 && noteIndex <= 15) {
+                        const remappedIndex = noteIndex - 8;
                         noteCounts[remappedIndex] = (noteCounts[remappedIndex] || 0) + 1;
                     }
                 }
@@ -358,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let totalCount = 0;
 
-        for (let key = 0; key < 4; key++) {
+        for (let key = 0; key < 8; key++) {
             const count = noteCounts[key] || 0;
             outputArea.innerHTML += `<p>${KEY_NAMES[key]}: ${count}</p>`;
             totalCount += count;
@@ -385,53 +405,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (chartData.notes[difficulty]) {
                 let totalCount = 0;
-                chartData.notes[difficulty].forEach(note => {
-                    const noteIndex = note.d;
-                    if (noteIndex >= 0 && noteIndex <= 3) {
-                        totalCount++;
-                    }
-                });
-
-                const maxScore = totalCount * scoreMultiplier;
-                maxComboValues.push(`${totalCount} (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`);
-                maxScoreValues.push(`${maxScore} (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`);
-            }
-        });
-
-        const wikiTemplateString = generateWikiTemplate({
-            songName,
-            artist,
-            charter,
-            bpm,
-            scrollValues,
-            maxComboValues,
-            maxScoreValues
-        });
-        updateWikiTemplate(wikiTemplateString);
-
-        outputArea.innerHTML = '<h2>Chart Information</h2><hr>';
-        outputArea.innerHTML += `<p><strong>Engine:</strong> V-Slice Engine</p>`;
-        outputArea.innerHTML += `<p><strong>Song:</strong> ${songName}</p>`;
-        outputArea.innerHTML += `<p><strong>Artist:</strong> ${artist}</p>`;
-        outputArea.innerHTML += `<p><strong>Charter:</strong> ${charter}</p>`;
-        outputArea.innerHTML += `<p><strong>BPM:</strong> ${bpm}</p>`;
-        outputArea.innerHTML += `<p><strong>Scroll Speed:</strong> ${scrollValues.join(", ")}</p><hr>`;
-
-        DIFFICULTIES.forEach(difficulty => {
-            if (chartData.notes[difficulty]) {
-                outputArea.innerHTML += `<h3>${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Difficulty</h3>`;
-                let totalCount = 0;
                 const noteCounts = {};
 
                 chartData.notes[difficulty].forEach(note => {
                     const noteIndex = note.d;
-                    if (noteIndex >= 0 && noteIndex <= 3) {
+                    if (noteIndex >= 0 && noteIndex <= 7) {
                         noteCounts[noteIndex] = (noteCounts[noteIndex] || 0) + 1;
                         totalCount++;
                     }
                 });
 
-                for (let key = 0; key < 4; key++) {
+                for (let key = 0; key < 8; key++) {
                     const count = noteCounts[key] || 0;
                     outputArea.innerHTML += `<p>${KEY_NAMES[key]}: ${count}</p>`;
                 }
@@ -455,12 +439,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (const note of playerStrumLine.notes) {
             const noteIndex = note.id;
-            if (noteIndex >= 0 && noteIndex <= 3) {
+            if (noteIndex >= 0 && noteIndex <= 7) {
                 noteCounts[noteIndex] = (noteCounts[noteIndex] || 0) + 1;
             }
         }
 
-        for (let key = 0; key < 4; key++) {
+        for (let key = 0; key < 8; key++) {
             totalCount += noteCounts[key] || 0;
         }
         const multipliedTotal = totalCount * scoreMultiplier;
@@ -500,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
         outputArea.innerHTML += `<p><strong>BPM:</strong> ${bpmInfo}</p>`;
         outputArea.innerHTML += `<p><strong>Scroll Speed:</strong> ${scrollSpeedInfo}</p><hr>`;
 
-        for (let key = 0; key < 4; key++) {
+        for (let key = 0; key < 8; key++) {
             const count = noteCounts[key] || 0;
             outputArea.innerHTML += `<p>${KEY_NAMES[key]}: ${count}</p>`;
         }
