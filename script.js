@@ -79,7 +79,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isValidMultiplier(newMultiplier)) {
             scoreMultiplier = newMultiplier;
             alert(`Score multiplier updated to ${scoreMultiplier}`);
-            if (lastProcessedChartData) processJson(lastProcessedChartData);
+            if (lastProcessedChartData) {
+                if (lastProcessedChartData.chartFile) {
+                    processChartWithMetadata(
+                        lastProcessedChartData.chartFile,
+                        lastProcessedChartData.metadataFiles || {}
+                    );
+                } else {
+                    processJson(lastProcessedChartData);
+                }
+            }
         } else {
             alert('Please enter a valid positive number.');
         }
@@ -93,22 +102,59 @@ document.addEventListener('DOMContentLoaded', () => {
             : 'Show Funkipedia SongInfo Template';
     }
 
-    // File Handling
+    // File Handling, prepare for a nested mess. I will clean it up later. --Lulu
     function handleFiles(files) {
         if (files.length === 1) {
-            processSingleFile(files[0]);
+            const file = files[0];
+
+            if (isJsonFile(file)) {
+                readFile(file).then(jsonData => {
+                    if (lastProcessedChartData && lastProcessedChartData.chartFile) {
+                        const chart = lastProcessedChartData.chartFile;
+                        if (isPsychEventFile(jsonData)) {
+                            if (!isPsychChartFile(chart)) {
+                                alert('This event file is for Psych Engine charts only. Please load a matching event file.');
+                                return;
+                            }
+                            lastProcessedChartData.metadataFiles.psychEvents = jsonData;
+                            processChartWithMetadata(chart, lastProcessedChartData.metadataFiles);
+                            alert('Metadata file added and chart reprocessed.');
+                            return;
+                        } else if (isVSliceMetadata(jsonData)) {
+                            if (!isVsliceChartFile(chart)) {
+                                alert('This metadata file is for V-Slice Engine charts only. Please load a matching event file.');
+                                return;
+                            }
+                            lastProcessedChartData.metadataFiles.vsliceMetadata = jsonData;
+                            processChartWithMetadata(chart, lastProcessedChartData.metadataFiles);
+                            alert('Metadata file added and chart reprocessed.');
+                            return;
+                        } else if (isCodenameMetadataFile(jsonData)) {
+                            if (!isCodenameChartFile(chart)) {
+                                alert('This metadata file is for Codename Engine charts only. Please load a matching event file.');
+                                return;
+                            }
+                            lastProcessedChartData.metadataFiles.codenameMetadata = jsonData;
+                            processChartWithMetadata(chart, lastProcessedChartData.metadataFiles);
+                            alert('Metadata file added and chart reprocessed.');
+                            return;
+                        }
+                    }
+                    if (isPsychEventFile(jsonData) || isVSliceMetadata(jsonData) || isCodenameMetadataFile(jsonData)) {
+                        outputArea.textContent = 'Please load a chart file first before loading metadata or event files.';
+                        return;
+                    }
+                    processJson(jsonData);
+                }).catch(showError);
+
+            } else {
+                outputArea.textContent = 'Please upload a valid JSON file.';
+            }
+
         } else if (files.length === 2) {
             processMultipleFiles(files);
         } else {
             outputArea.textContent = 'Please upload one or two valid JSON files.';
-        }
-    }
-
-    function processSingleFile(file) {
-        if (isJsonFile(file)) {
-            readFile(file).then(processJson).catch(showError);
-        } else {
-            outputArea.textContent = 'Please upload a valid JSON file.';
         }
     }
 
@@ -173,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function processChartWithMetadata(chartFile, metadataFiles) {
+        lastProcessedChartData = { chartFile, metadataFiles };
         if (detectedEngine === "Psych Engine" && metadataFiles.psychEvents) {
             mergePsychChartAndEvents(chartFile, metadataFiles.psychEvents);
         } else if (detectedEngine === "V-Slice Engine" && metadataFiles.vsliceMetadata) {
@@ -289,6 +336,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function processJson(data) {
         try {
             lastProcessedChartData = data;
+          
+        if (data && data.chartFile) {
+            processChartWithMetadata(data.chartFile, data.metadataFiles || {});
+            return;
+        }
+
+        if (isPsychChartFile(data) || isVsliceChartFile(data) || isCodenameChartFile(data)) {
+            lastProcessedChartData = { chartFile: data, metadataFiles: {} };
+        } else {
+            lastProcessedChartData = data;
+        }
+
+        const psychFormat = isPsychChartFile(data);
 
             const psychFormat = isPsychChartFile(data);
 
@@ -387,13 +447,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let key = 0; key < 4; key++) {
             const count = noteCounts[key] || 0;
-            outputArea.innerHTML += `<p>${KEY_NAMES[key]}: ${count}</p>`;
+            outputArea.innerHTML += `<p><strong>${KEY_NAMES[key]}:</strong> ${count}</p>`;
             totalCount += count;
         }
 
         const multipliedTotal = totalCount * scoreMultiplier;
-        outputArea.innerHTML += `<hr><p>Max Combo: ${totalCount}</p>`;
-        outputArea.innerHTML += `<p>Max Score: ${multipliedTotal}</p>`;
+        outputArea.innerHTML += `<hr><p><strong>Max Combo:</strong> ${totalCount}</p>`;
+        outputArea.innerHTML += `<p><strong>Max Score:</strong> ${multipliedTotal}</p>`;
     }
 
     function processVsliceChart(chartData, metadata = null) {
@@ -460,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 for (let key = 0; key < 4; key++) {
                     const count = noteCounts[key] || 0;
-                    outputArea.innerHTML += `<p>${KEY_NAMES[key]}: ${count}</p>`;
+                    outputArea.innerHTML += `<p><strong>${KEY_NAMES[key]}:</strong> ${count}</p>`;
                 }
 
                 const multipliedTotal = totalCount * scoreMultiplier;
@@ -529,9 +589,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let key = 0; key < 4; key++) {
             const count = noteCounts[key] || 0;
-            outputArea.innerHTML += `<p>${KEY_NAMES[key]}: ${count}</p>`;
+            outputArea.innerHTML += `<p><strong>${KEY_NAMES[key]}:</strong> ${count}</p>`;
         }
-        outputArea.innerHTML += `<p><strong>Max Combo:</strong> ${totalCount}</p>`;
+        outputArea.innerHTML += `<hr><p><strong>Max Combo:</strong> ${totalCount}</p>`;
         outputArea.innerHTML += `<p><strong>Max Score:</strong> ${multipliedTotal}</p>`;
     }
 
