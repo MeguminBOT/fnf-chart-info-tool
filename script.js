@@ -1,5 +1,21 @@
 // script.js
 
+document.getElementById('save-output').addEventListener('click', saveOutputAsTextFile);
+
+function saveOutputAsTextFile() {
+    const outputContent = outputArea.innerText;
+    const blob = new Blob([outputContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'chart_info.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const KEY_NAMES = { 0: "Left", 1: "Down", 2: "Up", 3: "Right" };
     const DIFFICULTIES = ["easy", "normal", "hard"];
