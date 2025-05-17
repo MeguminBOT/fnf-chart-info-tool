@@ -1,21 +1,5 @@
 // script.js
 
-document.getElementById('save-output').addEventListener('click', saveOutputAsTextFile);
-
-function saveOutputAsTextFile() {
-    const outputContent = outputArea.innerText;
-    const blob = new Blob([outputContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'chart_info.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     const KEY_NAMES = { 0: "Left", 1: "Down", 2: "Up", 3: "Right" };
     const DIFFICULTIES = ["easy", "normal", "hard"];
@@ -29,12 +13,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const wikiTemplateString = document.getElementById('song-info-output');
     const toggleSongInfoButton = document.getElementById('toggle-song-info');
     const songInfoContainer = document.getElementById('song-info-container');
+    const outputArea = document.getElementById('output-area');
 
     let scoreMultiplier = DEFAULT_MULTIPLIER;
     let detectedEngine = "Unknown";
     let lastProcessedChartData = null;
 
+    document.getElementById('output-area').addEventListener('click', () => saveOutputAsTextFile(output-area));
+
     setupEventListeners();
+    
+    function saveOutputAsTextFile(outputArea) {
+        const outputContent = outputArea.innerText;
+        const blob = new Blob([outputContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'chart_info.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+    }
 
     function setupEventListeners() {
         dropArea.addEventListener('dragover', handleDragOver);
