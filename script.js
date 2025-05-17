@@ -53,7 +53,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isValidMultiplier(newMultiplier)) {
             scoreMultiplier = newMultiplier;
             alert(`Score multiplier updated to ${scoreMultiplier}`);
-            if (lastProcessedChartData) processJson(lastProcessedChartData);
+            if (lastProcessedChartData) {
+                if (lastProcessedChartData.chartFile) {
+                    processChartWithMetadata(
+                        lastProcessedChartData.chartFile,
+                        lastProcessedChartData.metadataFiles || {}
+                    );
+                } else {
+                    processJson(lastProcessedChartData);
+                }
+            }
         } else {
             alert('Please enter a valid positive number.');
         }
@@ -147,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function processChartWithMetadata(chartFile, metadataFiles) {
+        lastProcessedChartData = { chartFile, metadataFiles };
         if (detectedEngine === "Psych Engine" && metadataFiles.psychEvents) {
             mergePsychChartAndEvents(chartFile, metadataFiles.psychEvents);
         } else if (detectedEngine === "V-Slice Engine" && metadataFiles.vsliceMetadata) {
@@ -261,6 +271,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function processJson(data) {
+        if (data && data.chartFile) {
+            processChartWithMetadata(data.chartFile, data.metadataFiles || {});
+            return;
+        }
         lastProcessedChartData = data;
 
         const psychFormat = isPsychChartFile(data);
