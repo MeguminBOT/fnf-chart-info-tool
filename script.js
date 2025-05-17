@@ -374,13 +374,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let key = 0; key < 4; key++) {
             const count = noteCounts[key] || 0;
-            outputArea.innerHTML += `<p>${KEY_NAMES[key]}: ${count}</p>`;
+            outputArea.innerHTML += `<p><strong>${KEY_NAMES[key]}:</strong> ${count}</p>`;
             totalCount += count;
         }
 
         const multipliedTotal = totalCount * scoreMultiplier;
-        outputArea.innerHTML += `<hr><p>Max Combo: ${totalCount}</p>`;
-        outputArea.innerHTML += `<p>Max Score: ${multipliedTotal}</p>`;
+        outputArea.innerHTML += `<hr><p><strong>Max Combo:</strong> ${totalCount}</p>`;
+        outputArea.innerHTML += `<p><strong>Max Score:</strong> ${multipliedTotal}</p>`;
     }
 
     function processVsliceChart(chartData, metadata = null) {
@@ -447,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 for (let key = 0; key < 4; key++) {
                     const count = noteCounts[key] || 0;
-                    outputArea.innerHTML += `<p>${KEY_NAMES[key]}: ${count}</p>`;
+                    outputArea.innerHTML += `<p><strong>${KEY_NAMES[key]}:</strong> ${count}</p>`;
                 }
 
                 const multipliedTotal = totalCount * scoreMultiplier;
@@ -516,9 +516,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let key = 0; key < 4; key++) {
             const count = noteCounts[key] || 0;
-            outputArea.innerHTML += `<p>${KEY_NAMES[key]}: ${count}</p>`;
+            outputArea.innerHTML += `<p><strong>${KEY_NAMES[key]}:</strong> ${count}</p>`;
         }
-        outputArea.innerHTML += `<p><strong>Max Combo:</strong> ${totalCount}</p>`;
+        outputArea.innerHTML += `<hr><p><strong>Max Combo:</strong> ${totalCount}</p>`;
         outputArea.innerHTML += `<p><strong>Max Score:</strong> ${multipliedTotal}</p>`;
     }
 
