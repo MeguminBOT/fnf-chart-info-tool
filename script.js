@@ -22,21 +22,29 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('output-area').addEventListener('click', () => saveOutputAsTextFile(output-area));
 
     setupEventListeners();
+
+    function ensureSaveButtonVisible() {
+        const saveButton = document.getElementById('save-output');
+        if (saveButton) {
+            saveButton.style.display = 'block';
+        }
     
     function saveOutputAsTextFile(outputArea) {
-        const outputContent = outputArea.innerText;
-        const blob = new Blob([outputContent], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'chart_info.txt';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        setTimeout(() => URL.revokeObjectURL(url), 100);
-    }
+        try {
+            const outputContent = outputArea.innerText;
+            const blob = new Blob([outputContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'chart_info.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        } catch (error) {
+            outputArea.textContent = `Error saving output: ${error.message}`;
+        }
 
     function setupEventListeners() {
         dropArea.addEventListener('dragover', handleDragOver);
@@ -279,31 +287,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function processJson(data) {
-        lastProcessedChartData = data;
+        try {
+            lastProcessedChartData = data;
 
-        const psychFormat = isPsychChartFile(data);
+            const psychFormat = isPsychChartFile(data);
 
-        if (isVsliceChartFile(data)) {
-            detectedEngine = "V-Slice Engine";
-            processVsliceChart(data, null);
+            if (isVsliceChartFile(data)) {
+                detectedEngine = "V-Slice Engine";
+                processVsliceChart(data, null);
+            } else if (isCodenameChartFile(data)) {
+                detectedEngine = "Codename Engine";
+                processCodenameChart(data, null);
+            } else if (psychFormat === "psych_v1") {
+                detectedEngine = "Psych Engine";
+                processPsychChart(data);
+            } else if (psychFormat === "psych_v1_convert") {
+                detectedEngine = "Psych Engine (Legacy) / Kade Engine / Other";
+                processPsychChart(data.song);
+            } else {
+                detectedEngine = "Unsupported Engine";
+                outputArea.textContent = 'Unsupported chart format. If you believe this is an error, please report it here:\nhttps://github.com/MeguminBOT/fnf-chart-info-tool/issues.';
+            }
 
-        } else if (isCodenameChartFile(data)) {
-            detectedEngine = "Codename Engine";
-            processCodenameChart(data, null);
-
-        } else if (psychFormat === "psych_v1") {
-            detectedEngine = "Psych Engine";
-            processPsychChart(data);
-
-        } else if (psychFormat === "psych_v1_convert") {
-            detectedEngine = "Psych Engine (Legacy) / Kade Engine / Other";
-            processPsychChart(data.song);
-
-        } else {
-            detectedEngine = "Unsupported Engine";
-            outputArea.textContent = 'Unsupported chart format. If you believe this is an error, please report it here:\nhttps://github.com/MeguminBOT/fnf-chart-info-tool/issues.';
+            ensureSaveButtonVisible();
+        } catch (error) {
+            outputArea.textContent = `Error processing JSON: ${error.message}`;
         }
-    }
 
     function processPsychChart(chartData) {
         const noteCounts = {};
