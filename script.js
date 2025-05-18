@@ -79,57 +79,70 @@ document.addEventListener('DOMContentLoaded', () => {
     // File Handling, prepare for a nested mess. I will clean it up later. --Lulu
     function handleFiles(files) {
         if (files.length === 1) {
-            const file = files[0];
-
-            if (isJsonFile(file)) {
-                readFile(file).then(jsonData => {
-                    if (lastProcessedChartData && lastProcessedChartData.chartFile) {
-                        const chart = lastProcessedChartData.chartFile;
-                        if (isPsychEventFile(jsonData)) {
-                            if (!isPsychChartFile(chart)) {
-                                alert('This event file is for Psych Engine charts only. Please load a matching event file.');
-                                return;
-                            }
-                            lastProcessedChartData.metadataFiles.psychEvents = jsonData;
-                            processChartWithMetadata(chart, lastProcessedChartData.metadataFiles);
-                            alert('Metadata file added and chart reprocessed.');
-                            return;
-                        } else if (isVSliceMetadata(jsonData)) {
-                            if (!isVsliceChartFile(chart)) {
-                                alert('This metadata file is for V-Slice Engine charts only. Please load a matching event file.');
-                                return;
-                            }
-                            lastProcessedChartData.metadataFiles.vsliceMetadata = jsonData;
-                            processChartWithMetadata(chart, lastProcessedChartData.metadataFiles);
-                            alert('Metadata file added and chart reprocessed.');
-                            return;
-                        } else if (isCodenameMetadataFile(jsonData)) {
-                            if (!isCodenameChartFile(chart)) {
-                                alert('This metadata file is for Codename Engine charts only. Please load a matching event file.');
-                                return;
-                            }
-                            lastProcessedChartData.metadataFiles.codenameMetadata = jsonData;
-                            processChartWithMetadata(chart, lastProcessedChartData.metadataFiles);
-                            alert('Metadata file added and chart reprocessed.');
-                            return;
-                        }
-                    }
-                    if (isPsychEventFile(jsonData) || isVSliceMetadata(jsonData) || isCodenameMetadataFile(jsonData)) {
-                        outputArea.textContent = 'Please load a chart file first before loading metadata or event files.';
-                        return;
-                    }
-                    processJson(jsonData);
-                }).catch(showError);
-
-            } else {
-                outputArea.textContent = 'Please upload a valid JSON file.';
-            }
-
+            handleSingleFile(files[0]);
         } else if (files.length === 2) {
             processMultipleFiles(files);
         } else {
             outputArea.textContent = 'Please upload one or two valid JSON files.';
         }
+    }
+
+    function handleSingleFile(file) {
+        if (!isJsonFile(file)) {
+            outputArea.textContent = 'Please upload a valid JSON file.';
+            return;
+        }
+        readFile(file)
+            .then(jsonData => processSingleJson(jsonData))
+            .catch(showError);
+    }
+
+    function processSingleJson(jsonData) {
+        if (lastProcessedChartData && lastProcessedChartData.chartFile) {
+            const chart = lastProcessedChartData.chartFile;
+            if (tryAddMetadataFile(jsonData, chart)) {
+                return;
+            }
+        }
+        if (isPsychEventFile(jsonData) || isVSliceMetadata(jsonData) || isCodenameMetadataFile(jsonData)) {
+            outputArea.textContent = 'Please load a chart file first before loading metadata or event files.';
+            return;
+        }
+        processJson(jsonData);
+    }
+
+    function tryAddMetadataFile(jsonData, chart) {
+        if (isPsychEventFile(jsonData)) {
+            if (!isPsychChartFile(chart)) {
+                alert('This event file is for Psych Engine charts only. Please load a matching event file.');
+                return true;
+            }
+            lastProcessedChartData.metadataFiles.psychEvents = jsonData;
+            processChartWithMetadata(chart, lastProcessedChartData.metadataFiles);
+            alert('Metadata file added and chart reprocessed.');
+            return true;
+        }
+        if (isVSliceMetadata(jsonData)) {
+            if (!isVsliceChartFile(chart)) {
+                alert('This metadata file is for V-Slice Engine charts only. Please load a matching event file.');
+                return true;
+            }
+            lastProcessedChartData.metadataFiles.vsliceMetadata = jsonData;
+            processChartWithMetadata(chart, lastProcessedChartData.metadataFiles);
+            alert('Metadata file added and chart reprocessed.');
+            return true;
+        }
+        if (isCodenameMetadataFile(jsonData)) {
+            if (!isCodenameChartFile(chart)) {
+                alert('This metadata file is for Codename Engine charts only. Please load a matching event file.');
+                return true;
+            }
+            lastProcessedChartData.metadataFiles.codenameMetadata = jsonData;
+            processChartWithMetadata(chart, lastProcessedChartData.metadataFiles);
+            alert('Metadata file added and chart reprocessed.');
+            return true;
+        }
+        return false;
     }
 
     function processMultipleFiles(files) {
