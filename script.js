@@ -76,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
             : 'Show Funkipedia SongInfo Template';
     }
 
-    // File Handling, prepare for a nested mess. I will clean it up later. --Lulu
     function handleFiles(files) {
         if (files.length === 1) {
             handleSingleFile(files[0]);
