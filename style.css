@@ -1,3 +1,54 @@
+
+#dark-mode-toggle.button {
+    position: absolute;
+    top: 18px;
+    right: 30px;
+    z-index: 1000;
+    background-color: #1976D2;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    box-shadow: none;
+}
+#dark-mode-toggle.button:hover {
+    background-color: #1565C0;
+}
+
+body.dark-mode {
+    background-color: #212121;
+    color: rgba(255,255,255,0.87);
+}
+
+.dark-mode .container {
+    background: #212121;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+}
+
+.dark-mode .info-box {
+    background-color: #282828;
+    border-color: #33334d;
+}
+
+.dark-mode #drop-area {
+    background-color: #282828;
+}
+.dark-mode #drop-area:hover {
+    background-color: #212121;
+}
+
+.dark-mode .output {
+    background-color: #282828;
+    border-color: #33334d;
+}
+
+.dark-mode .collapsible {
+    background-color: #282828;
+    border-color: #33334d;
+}
 #song-info-section .song-info-btn {
     display: inline-flex;
     align-items: center;

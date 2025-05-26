@@ -15,6 +15,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const songInfoContainer = document.getElementById('song-info-container');
     const saveOutputButton = document.getElementById('save-output');
 
+    // Dark mode toggle
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const body = document.body;
+    if (localStorage.getItem('darkMode') === 'true') {
+        body.classList.add('dark-mode');
+        if (darkModeToggle) darkModeToggle.textContent = '☀️ Light Mode';
+    }
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            darkModeToggle.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+        });
+    }
+
     let scoreMultiplier = DEFAULT_MULTIPLIER;
     let detectedEngine = "Unknown";
     let lastProcessedChartData = null;
