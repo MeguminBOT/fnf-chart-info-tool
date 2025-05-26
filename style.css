@@ -1,3 +1,60 @@
+#song-info-section .song-info-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    min-width: 0;
+    padding: 0 18px;
+    font-size: 0.95rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-sizing: border-box;
+    line-height: 1.2;
+    vertical-align: middle;
+}
+
+#toggle-song-info.song-info-btn {
+    background-color: #9f58b1;
+    color: #fff;
+    transition: background-color 0.2s;
+}
+#toggle-song-info.song-info-btn:hover {
+    background-color: #7b4688;
+}
+
+#save-output.song-info-btn {
+    background-color: #ff9e22;
+    color: #fff;
+    transition: background-color 0.2s;
+}
+#save-output.song-info-btn:hover {
+    background-color: #e68a00;
+}
+#song-info-section > div {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#toggle-song-info,
+#save-output {
+    height: 40px !important;
+    min-width: 0;
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+#save-output {
+    margin-top: 0;
+    text-decoration: none;
+    box-shadow: none;
+}
+
+#save-output:hover {
+    background-color: #0056b3;
+}
 body {
     font-family: Arial, sans-serif;
     margin: 0;

@@ -13,10 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const wikiTemplateString = document.getElementById('song-info-output');
     const toggleSongInfoButton = document.getElementById('toggle-song-info');
     const songInfoContainer = document.getElementById('song-info-container');
+    const saveOutputButton = document.getElementById('save-output');
 
     let scoreMultiplier = DEFAULT_MULTIPLIER;
     let detectedEngine = "Unknown";
     let lastProcessedChartData = null;
+    let currentSongName = "Unknown";
 
     setupEventListeners();
 
@@ -27,6 +29,42 @@ document.addEventListener('DOMContentLoaded', () => {
         fileInput.addEventListener('change', handleFileInput);
         updateMultiplierButton.addEventListener('click', updateMultiplier);
         toggleSongInfoButton.addEventListener('click', wikiTemplateVisibility);
+        saveOutputButton.addEventListener('click', saveOutputAsText);
+    }
+
+    function sanitizeFilenamePart(str) {
+        return String(str)
+            .replace(/[^a-zA-Z0-9-_]/g, '_')
+            .replace(/_+/g, '_')
+            .replace(/^_+|_+$/g, '')
+            .substring(0, 50) || 'Unknown';
+    }
+
+    function saveOutputAsText() {
+        const resultElem = document.getElementById('result');
+        if (!resultElem) {
+            alert('Error: No data to save! Please make sure the chart has been processed.');
+            return;
+        }
+        const outputText = resultElem.textContent;
+        if (!outputText || !outputText.trim()) {
+            alert('No output to save!');
+            return;
+        }
+        const songPart = sanitizeFilenamePart(currentSongName);
+        const enginePart = sanitizeFilenamePart(detectedEngine);
+        const filename = `[FnfChartInfoTool]_${songPart}_${enginePart}.txt`;
+        const blob = new Blob([outputText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 0);
     }
 
     function handleDragOver(event) {
@@ -346,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
             processPsychChart(data);
 
         } else if (psychFormat === "psych_v1_convert") {
-            detectedEngine = "Psych Engine (Legacy) / Kade Engine / Other";
+            detectedEngine = "Legacy Chart Format";
             processPsychChart(data.song);
 
         } else {
@@ -406,6 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const songName = chartData.song || chartData.songName || "Unknown";
+        currentSongName = songName;
 
         const wikiTemplateString = generateWikiTemplate({
             songName,
@@ -418,23 +457,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         updateWikiTemplate(wikiTemplateString);
 
-        outputArea.innerHTML = '<h2>Chart Information</h2><hr>';
-        outputArea.innerHTML += `<p><strong>Engine:</strong> ${detectedEngine}</p>`;
-        outputArea.innerHTML += `<p><strong>Song:</strong> ${songName}</p>`;
-        outputArea.innerHTML += `<p><strong>BPM:</strong> ${bpmInfo}</p>`;
-        outputArea.innerHTML += `<p><strong>Scroll Speed:</strong> ${scrollSpeedInfo}</p><hr>`;
+        let html = '<h2>Chart Information</h2><hr>';
+        html += `<p><strong>Engine:</strong> ${detectedEngine}</p>`;
+        html += `<p><strong>Song:</strong> ${songName}</p>`;
+        html += `<p><strong>BPM:</strong> ${bpmInfo}</p>`;
+        html += `<p><strong>Scroll Speed:</strong> ${scrollSpeedInfo}</p><hr>`;
 
         let totalCount = 0;
+        let text = `Engine: ${detectedEngine}\nSong: ${songName}\nBPM: ${bpmInfo}\nScroll Speed: ${scrollSpeedInfo}\n`;
 
         for (let key = 0; key < 4; key++) {
             const count = noteCounts[key] || 0;
-            outputArea.innerHTML += `<p><strong>${KEY_NAMES[key]}:</strong> ${count}</p>`;
+            html += `<p><strong>${KEY_NAMES[key]}:</strong> ${count}</p>`;
+            text += `${KEY_NAMES[key]}: ${count}\n`;
             totalCount += count;
         }
 
         const multipliedTotal = totalCount * scoreMultiplier;
-        outputArea.innerHTML += `<hr><p><strong>Max Combo:</strong> ${totalCount}</p>`;
-        outputArea.innerHTML += `<p><strong>Max Score:</strong> ${multipliedTotal}</p>`;
+        html += `<hr><p><strong>Max Combo:</strong> ${totalCount}</p>`;
+        html += `<p><strong>Max Score:</strong> ${multipliedTotal}</p>`;
+        text += `Max Combo: ${totalCount}\nMax Score: ${multipliedTotal}`;
+
+        outputArea.innerHTML = html;
+        let hiddenResultElem = document.getElementById('result');
+        if (!hiddenResultElem) {
+            hiddenResultElem = document.createElement('pre');
+            hiddenResultElem.id = 'result';
+            hiddenResultElem.style.display = 'none';
+            document.body.appendChild(hiddenResultElem);
+        }
+        hiddenResultElem.textContent = text;
     }
 
     function processVsliceChart(chartData, metadata = null) {
@@ -443,6 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const maxScoreValues = [];
         const bpm = metadata?.timeChanges?.[0]?.bpm || chartData.bpm || "Unknown";
         const songName = metadata?.songName || chartData.songName || "Unknown";
+        currentSongName = songName;
         const artist = metadata?.artist || chartData.artist || "Unknown";
         const charter = metadata?.charter || chartData.charter || "Unknown";
 
@@ -477,17 +530,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         updateWikiTemplate(wikiTemplateString);
 
-        outputArea.innerHTML = '<h2>Chart Information</h2><hr>';
-        outputArea.innerHTML += `<p><strong>Engine:</strong> V-Slice Engine</p>`;
-        outputArea.innerHTML += `<p><strong>Song:</strong> ${songName}</p>`;
-        outputArea.innerHTML += `<p><strong>Artist:</strong> ${artist}</p>`;
-        outputArea.innerHTML += `<p><strong>Charter:</strong> ${charter}</p>`;
-        outputArea.innerHTML += `<p><strong>BPM:</strong> ${bpm}</p>`;
-        outputArea.innerHTML += `<p><strong>Scroll Speed:</strong> ${scrollValues.join(", ")}</p><hr>`;
+        let html = '<h2>Chart Information</h2><hr>';
+        html += `<p><strong>Engine:</strong> V-Slice Engine</p>`;
+        html += `<p><strong>Song:</strong> ${songName}</p>`;
+        html += `<p><strong>Artist:</strong> ${artist}</p>`;
+        html += `<p><strong>Charter:</strong> ${charter}</p>`;
+        html += `<p><strong>BPM:</strong> ${bpm}</p>`;
+        html += `<p><strong>Scroll Speed:</strong> ${scrollValues.join(", ")}</p><hr>`;
+
+        let text = `Engine: V-Slice Engine\nSong: ${songName}\nArtist: ${artist}\nCharter: ${charter}\nBPM: ${bpm}\nScroll Speed: ${scrollValues.join(", ")}\n`;
 
         DIFFICULTIES.forEach(difficulty => {
             if (chartData.notes[difficulty]) {
-                outputArea.innerHTML += `<h3>${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Difficulty</h3>`;
+                html += `<h3>${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Difficulty</h3>`;
+                text += `\n${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Difficulty\n`;
                 let totalCount = 0;
                 const noteCounts = {};
 
@@ -501,14 +557,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 for (let key = 0; key < 4; key++) {
                     const count = noteCounts[key] || 0;
-                    outputArea.innerHTML += `<p><strong>${KEY_NAMES[key]}:</strong> ${count}</p>`;
+                    html += `<p><strong>${KEY_NAMES[key]}:</strong> ${count}</p>`;
+                    text += `${KEY_NAMES[key]}: ${count}\n`;
                 }
 
                 const multipliedTotal = totalCount * scoreMultiplier;
-                outputArea.innerHTML += `<p><strong>Max Combo:</strong> ${totalCount}</p>`;
-                outputArea.innerHTML += `<p><strong>Max Score:</strong> ${multipliedTotal}</p><hr>`;
+                html += `<p><strong>Max Combo:</strong> ${totalCount}</p>`;
+                html += `<p><strong>Max Score:</strong> ${multipliedTotal}</p><hr>`;
+                text += `Max Combo: ${totalCount}\nMax Score: ${multipliedTotal}\n`;
             }
         });
+        outputArea.innerHTML = html;
+        let hiddenResultElem = document.getElementById('result');
+        if (!hiddenResultElem) {
+            hiddenResultElem = document.createElement('pre');
+            hiddenResultElem.id = 'result';
+            hiddenResultElem.style.display = 'none';
+            document.body.appendChild(hiddenResultElem);
+        }
+        hiddenResultElem.textContent = text;
     }
 
     function processCodenameChart(data, meta) {
@@ -542,6 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const startingBPM = meta ? meta.bpm : "<meta.json not provided>";
         const songName = meta ? meta.displayName : "<meta.json not provided>";
+        currentSongName = songName;
         const bpmInfo = bpmChanges.length > 1
             ? `${startingBPM} (${bpmChanges.join(', ')})`
             : startingBPM;
@@ -562,18 +630,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         updateWikiTemplate(wikiTemplateString);
 
-        outputArea.innerHTML = '<h2>Chart Information</h2><hr>';
-        outputArea.innerHTML += `<p><strong>Engine:</strong> ${detectedEngine}</p>`;
-        outputArea.innerHTML += `<p><strong>Song:</strong> ${songName}</p>`;
-        outputArea.innerHTML += `<p><strong>BPM:</strong> ${bpmInfo}</p>`;
-        outputArea.innerHTML += `<p><strong>Scroll Speed:</strong> ${scrollSpeedInfo}</p><hr>`;
+        let html = '<h2>Chart Information</h2><hr>';
+        html += `<p><strong>Engine:</strong> ${detectedEngine}</p>`;
+        html += `<p><strong>Song:</strong> ${songName}</p>`;
+        html += `<p><strong>BPM:</strong> ${bpmInfo}</p>`;
+        html += `<p><strong>Scroll Speed:</strong> ${scrollSpeedInfo}</p><hr>`;
+
+        let text = `Engine: ${detectedEngine}\nSong: ${songName}\nBPM: ${bpmInfo}\nScroll Speed: ${scrollSpeedInfo}\n`;
 
         for (let key = 0; key < 4; key++) {
             const count = noteCounts[key] || 0;
-            outputArea.innerHTML += `<p><strong>${KEY_NAMES[key]}:</strong> ${count}</p>`;
+            html += `<p><strong>${KEY_NAMES[key]}:</strong> ${count}</p>`;
+            text += `${KEY_NAMES[key]}: ${count}\n`;
         }
-        outputArea.innerHTML += `<hr><p><strong>Max Combo:</strong> ${totalCount}</p>`;
-        outputArea.innerHTML += `<p><strong>Max Score:</strong> ${multipliedTotal}</p>`;
+        html += `<hr><p><strong>Max Combo:</strong> ${totalCount}</p>`;
+        html += `<p><strong>Max Score:</strong> ${multipliedTotal}</p>`;
+        text += `Max Combo: ${totalCount}\nMax Score: ${multipliedTotal}`;
+
+        outputArea.innerHTML = html;
+        let hiddenResultElem = document.getElementById('result');
+        if (!hiddenResultElem) {
+            hiddenResultElem = document.createElement('pre');
+            hiddenResultElem.id = 'result';
+            hiddenResultElem.style.display = 'none';
+            document.body.appendChild(hiddenResultElem);
+        }
+        hiddenResultElem.textContent = text;
     }
 
     function updateWikiTemplate(content) {
