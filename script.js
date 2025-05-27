@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chartFile) {
             processChartWithMetadata(chartFile, metadataFiles);
         } else {
-            outputArea.textContent = 'No valid chart or event files detected. If you believe this is an error, please report it here:\nhttps://github.com/MeguminBOT/fnf-chart-info-tool/issues.';
+            outputArea.textContent = 'No valid chart or event files detected. If you believe this is an error, please report it with the bug report button.';
         }
     }
 
@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } else {
             detectedEngine = "Unsupported Engine";
-            outputArea.textContent = 'Unsupported chart format. If you believe this is an error, please report it here:\nhttps://github.com/MeguminBOT/fnf-chart-info-tool/issues.';
+            outputArea.textContent = 'Unsupported chart format. If you believe this is an error, please report it with the bug report button.';
         }
     }
 
@@ -515,24 +515,84 @@ document.addEventListener('DOMContentLoaded', () => {
         const artist = metadata?.artist || chartData.artist || "Unknown";
         const charter = metadata?.charter || chartData.charter || "Unknown";
 
-        DIFFICULTIES.forEach(difficulty => {
-            if (chartData.scrollSpeed[difficulty]) {
-                scrollValues.push(`${chartData.scrollSpeed[difficulty]} (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`);
+
+        let allDifficulties;
+        if (metadata && metadata.playData && Array.isArray(metadata.playData.difficulties)) {
+            // Only include difficulties that have at least one note, in the order from playData.difficulties
+            const hasNotes = diff => Array.isArray(chartData.notes?.[diff]) && chartData.notes[diff].length > 0;
+            const metaDiffs = metadata.playData.difficulties.filter(hasNotes);
+            const extraDiffs = Object.keys(chartData.notes || {}).filter(
+                diff => !metaDiffs.includes(diff) && hasNotes(diff)
+            ).sort();
+            allDifficulties = [...metaDiffs, ...extraDiffs];
+        } else {
+            allDifficulties = Object.keys(chartData.notes || {}).filter(
+                diff => Array.isArray(chartData.notes[diff]) && chartData.notes[diff].length > 0
+            );
+        }
+
+        const difficultyData = {};
+        allDifficulties.forEach(difficulty => {
+            let scrollArr = [];
+            let initial = chartData.scrollSpeed && chartData.scrollSpeed[difficulty] !== undefined ? chartData.scrollSpeed[difficulty] : undefined;
+            if (initial !== undefined) {
+                scrollArr.push(Number(initial));
             }
 
-            if (chartData.notes[difficulty]) {
-                let totalCount = 0;
+            if (Array.isArray(chartData.events)) {
+                chartData.events.forEach(ev => {
+                    if (ev.e === "ScrollSpeed") {
+                        if (ev.v && typeof ev.v.scroll === "number") {
+                            if (initial !== undefined) {
+                                scrollArr.push(Number((initial * ev.v.scroll).toFixed(4)));
+                            } else {
+                                scrollArr.push(Number(ev.v.scroll));
+                            }
+                        }
+                    }
+                });
+            }
+
+            let scrollSpeedInfo = "Unknown";
+            if (scrollArr.length > 0) {
+                if (scrollArr.length > 1) {
+                    const changes = scrollArr.slice(1).join(", ");
+                    scrollSpeedInfo = `${scrollArr[0]}${changes ? ` (${changes})` : ''}`;
+                } else {
+                    scrollSpeedInfo = `${scrollArr[0]}`;
+                }
+            }
+
+            let totalCount = 0;
+            const noteCounts = {};
+            if (Array.isArray(chartData.notes[difficulty])) {
                 chartData.notes[difficulty].forEach(note => {
                     const noteIndex = note.d;
                     if (noteIndex >= 0 && noteIndex <= 3) {
+                        noteCounts[noteIndex] = (noteCounts[noteIndex] || 0) + 1;
                         totalCount++;
                     }
                 });
-
-                const maxScore = totalCount * scoreMultiplier;
-                maxComboValues.push(`${totalCount} (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`);
-                maxScoreValues.push(`${maxScore} (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`);
             }
+            const maxScore = totalCount * scoreMultiplier;
+
+            difficultyData[difficulty] = {
+                scrollSpeedInfo,
+                totalCount,
+                maxScore,
+                noteCounts
+            };
+        });
+
+        scrollValues.length = 0;
+        maxComboValues.length = 0;
+        maxScoreValues.length = 0;
+
+        allDifficulties.forEach(difficulty => {
+            const { scrollSpeedInfo, totalCount, maxScore } = difficultyData[difficulty];
+            scrollValues.push(`&nbsp;&nbsp;&nbsp;&nbsp;* <strong>${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}:</strong> ${scrollSpeedInfo}`);
+            maxComboValues.push(`${totalCount} (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`);
+            maxScoreValues.push(`${maxScore} (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`);
         });
 
         const wikiTemplateString = generateWikiTemplate({
@@ -552,36 +612,23 @@ document.addEventListener('DOMContentLoaded', () => {
         html += `<p><strong>Artist:</strong> ${artist}</p>`;
         html += `<p><strong>Charter:</strong> ${charter}</p>`;
         html += `<p><strong>BPM:</strong> ${bpm}</p>`;
-        html += `<p><strong>Scroll Speed:</strong> ${scrollValues.join(", ")}</p><hr>`;
+        html += `<div><strong>Scroll Speed:</strong><br>${scrollValues.join('<br>')}<br></div><hr>`;
 
-        let text = `Engine: V-Slice Engine\nSong: ${songName}\nArtist: ${artist}\nCharter: ${charter}\nBPM: ${bpm}\nScroll Speed: ${scrollValues.join(", ")}\n`;
+        let text = `Engine: V-Slice Engine\nSong: ${songName}\nArtist: ${artist}\nCharter: ${charter}\nBPM: ${bpm}\nScroll Speed:\n${scrollValues.map(v => '    ' + v.replace(/<[^>]+>/g, "")).join("\n")}\n`;
 
-        DIFFICULTIES.forEach(difficulty => {
-            if (chartData.notes[difficulty]) {
-                html += `<h3>${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Difficulty</h3>`;
-                text += `\n${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Difficulty\n`;
-                let totalCount = 0;
-                const noteCounts = {};
-
-                chartData.notes[difficulty].forEach(note => {
-                    const noteIndex = note.d;
-                    if (noteIndex >= 0 && noteIndex <= 3) {
-                        noteCounts[noteIndex] = (noteCounts[noteIndex] || 0) + 1;
-                        totalCount++;
-                    }
-                });
-
-                for (let key = 0; key < 4; key++) {
-                    const count = noteCounts[key] || 0;
-                    html += `<p><strong>${KEY_NAMES[key]}:</strong> ${count}</p>`;
-                    text += `${KEY_NAMES[key]}: ${count}\n`;
-                }
-
-                const multipliedTotal = totalCount * scoreMultiplier;
-                html += `<p><strong>Max Combo:</strong> ${totalCount}</p>`;
-                html += `<p><strong>Max Score:</strong> ${multipliedTotal}</p><hr>`;
-                text += `Max Combo: ${totalCount}\nMax Score: ${multipliedTotal}\n`;
+        allDifficulties.forEach(difficulty => {
+            const { totalCount, noteCounts } = difficultyData[difficulty];
+            html += `<h3>${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Difficulty</h3>`;
+            text += `\n${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Difficulty\n`;
+            for (let key = 0; key < 4; key++) {
+                const count = noteCounts[key] || 0;
+                html += `<p><strong>${KEY_NAMES[key]}:</strong> ${count}</p>`;
+                text += `${KEY_NAMES[key]}: ${count}\n`;
             }
+            const multipliedTotal = totalCount * scoreMultiplier;
+            html += `<p><strong>Max Combo:</strong> ${totalCount}</p>`;
+            html += `<p><strong>Max Score:</strong> ${multipliedTotal}</p><hr>`;
+            text += `Max Combo: ${totalCount}\nMax Score: ${multipliedTotal}\n`;
         });
         outputArea.innerHTML = html;
         let hiddenResultElem = document.getElementById('result');
@@ -687,8 +734,13 @@ document.addEventListener('DOMContentLoaded', () => {
     | composer = ${artist || "Unknown"}
     | charter = ${charter || "Unknown"}
     | bpm = ${bpm || "Unknown"}
-    | scroll = ${scrollValues?.join("<br>") || "Unknown"}
-    | maxcombo = ${maxComboValues?.join("<br>") || "Unknown"}
-    | maxscore = ${maxScoreValues?.join("<br>") || "Unknown"}}}`;
+    | scroll = ${Array.isArray(scrollValues) ? scrollValues.map(line => String(line)
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, '')
+        .replace(/^[\\s\\*]+/, '')
+        .trim()
+    ).join('<br>') : "Unknown"}
+    | maxcombo = ${maxComboValues?.join('<br>') || "Unknown"}
+    | maxscore = ${maxScoreValues?.join('<br>') || "Unknown"}}`;
     }
 });
