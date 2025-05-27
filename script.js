@@ -515,9 +515,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const artist = metadata?.artist || chartData.artist || "Unknown";
         const charter = metadata?.charter || chartData.charter || "Unknown";
 
+        let scrollSpeedChanges = [];
+        if (metadata && Array.isArray(metadata.timeChanges)) {
+            scrollSpeedChanges = metadata.timeChanges
+                .filter(change => typeof change.scrollSpeed === 'number')
+                .map(change => change.scrollSpeed);
+        }
+
         DIFFICULTIES.forEach(difficulty => {
             if (chartData.scrollSpeed[difficulty]) {
-                scrollValues.push(`${chartData.scrollSpeed[difficulty]} (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`);
+                if (scrollSpeedChanges.length > 0) {
+                    scrollValues.push(`${chartData.scrollSpeed[difficulty]} (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}) [Changes: ${scrollSpeedChanges.join(", ")}]`);
+                } else {
+                    scrollValues.push(`${chartData.scrollSpeed[difficulty]} (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`);
+                }
             }
 
             if (chartData.notes[difficulty]) {
