@@ -740,7 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .replace(/^[\\s\\*]+/, '')
         .trim()
     ).join('<br>') : "Unknown"}
-    | maxcombo = ${maxComboValues?.join('<br>') || "Unknown"}
+    | maxnotes = ${maxComboValues?.join('<br>') || "Unknown"}
     | maxscore = ${maxScoreValues?.join('<br>') || "Unknown"}}`;
     }
 });
